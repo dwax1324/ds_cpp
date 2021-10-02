@@ -1,7 +1,9 @@
 # ds_cpp
 
-0. ADT
+## . ADT
    What is ADT?
 
-1. Linked List
-   1-1.
+## Building blokcs
+1. Linked List 
+   1-1. Single Linked List
+   1-2. Double Linked List
