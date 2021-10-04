@@ -159,6 +159,7 @@ typename DoubleLinkedList<T>::Iterator& DoubleLinkedList<T>::Iterator ::operator
 
 template <class T>
 typename DoubleLinkedList<T>::Iterator& DoubleLinkedList<T>::insert(Iterator& it, const T& value) {
+    length++;
     if (it.ptr->prev->prev == NULL) {  // if it is begin()    NULL<-[head]<->[begin()]
         pushFront(value);
         return --it;
@@ -179,6 +180,7 @@ typename DoubleLinkedList<T>::Iterator& DoubleLinkedList<T>::insert(Iterator& it
 
 template <class T>
 void DoubleLinkedList<T>::erase(Iterator& it) {
+    length--;
     if (it.ptr->prev->prev == NULL) {  // begin()
         popFront();
         return;

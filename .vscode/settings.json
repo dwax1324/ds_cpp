@@ -34,6 +34,13 @@
         "cwchar": "cpp",
         "locale": "cpp",
         "memory": "cpp",
-        "new": "cpp"
+        "new": "cpp",
+        "iostream": "cpp",
+        "__string": "cpp",
+        "iomanip": "cpp",
+        "istream": "cpp",
+        "queue": "cpp",
+        "sstream": "cpp",
+        "stack": "cpp"
     }
 }
