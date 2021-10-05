@@ -128,13 +128,3 @@ void Vector<T>::pop_back() {
     __size--;
 }
 // vector END
-
-#include <bits/stdc++.h>
-#define all(x) x.begin(), x.end()
-#define len(x) (int)x.size()
-using namespace std;
-
-int main() {
-    cin.tie(0)->sync_with_stdio(0);
-    Vector<int> v;
-}

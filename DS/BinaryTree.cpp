@@ -4,7 +4,8 @@
 using namespace std;
 
 int main() {
+#ifndef ONLINE_JUDGE
+    freopen("input.txt", "r", stdin), freopen("output.txt", "w", stdout);
+#endif
     cin.tie(0)->sync_with_stdio(0);
-    vector<int> v;
-    cout << (v.begin() - v.begin());
 }

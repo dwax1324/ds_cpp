@@ -236,20 +236,3 @@ void LinkedDequeue<T>::popFront() { list.popFront(); };
 
 template <class T>
 void LinkedDequeue<T>::popBack() { list.popBack(); };
-
-#include <bits/stdc++.h>
-#define all(x) x.begin(), x.end()
-#define len(x) (int)x.size()
-using namespace std;
-
-int main() {
-    cin.tie(0)->sync_with_stdio(0);
-
-    LinkedDequeue<int> dq;
-
-    for (int i = 0; i < 10; i++) dq.pushBack(i);
-    while (dq.size()) {
-        cout << dq.front() << ' ';
-        dq.popFront();
-    }
-}
