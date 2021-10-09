@@ -54,7 +54,7 @@ public:
     void insert(int, const T&);
     void erase(int);
     void reserve(int);
-    const T& operator[](int);
+    T& operator[](int);
 
 private:
     int __capacity;
@@ -75,7 +75,7 @@ unsigned Vector<T>::size() const { return __size; }
 template <class T>  // empty
 bool Vector<T>::empty() const { return size() == 0; }
 template <class T>
-const T& Vector<T>::operator[](int i) {  // operator []
+T& Vector<T>::operator[](int i) {  // operator []
     assert(i >= 0 && i < size());
     return array[i];
 }
@@ -128,3 +128,16 @@ void Vector<T>::pop_back() {
     __size--;
 }
 // vector END
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+    Vector<int> v;
+    v.push_back(3);
+
+    v[0] = 1;
+    cout << v[0];
+}

@@ -11,7 +11,7 @@ https://en.wikipedia.org/wiki/Abstract_data_type
    What is ADT?
 
 ## What is the Difference?
-![](/examples.png)
+<!-- ![](/examples.png) -->
 source: https://dzone.com/articles/data-structures-and-their-applications
 ## Building blokcs
 1. Linked List 
@@ -21,13 +21,16 @@ source: https://dzone.com/articles/data-structures-and-their-applications
 
 ## ADT
 
-1. Stack
-2. Queue
-3. Dequeue
-4. Priority queue
-5. Vector
-6. List
-7. Set
-8. Disjoint set
-8. Map
-9. String
+
+# 1. String
+# 2. linked list
+# 3. Stack
+# 4. Queue
+# 5. Dequeue
+# 6. Vector
+# 7. List
+# 8. Priority queue
+# 9. Set
+# 10. Disjoint set
+# 11. Map
+# 10. 
