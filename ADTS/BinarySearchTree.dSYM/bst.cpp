@@ -22,15 +22,15 @@ public:
         Node *left, *right, *parent;
         ~Node()
         {
-            // if (left && left->parent->key == this->key)
-            //     left->parent = NULL;
-            // if (right && right->parent->key == this->key)
-            //     right->parent = NULL;
-            // if (parent && parent->key > key && parent->left && parent->left->key == this->key)
-            //     parent->left = NULL;
-            // if (parent && parent->key < key && parent->right && parent->right->key == this->key)
-            //     parent->right = NULL;
-            // left = right = parent = NULL;
+            if (left && left->parent == this)
+                left->parent = NULL;
+            if (right && right->parent == this)
+                right->parent = NULL;
+            if (parent && parent->key > key && parent->left && parent->left == this)
+                parent->left = NULL;
+            if (parent && parent->key < key && parent->right && parent->right == this)
+                parent->right = NULL;
+            left = right = parent = NULL;
         }
         Node(K k) : key(k), left(NULL), right(NULL), parent(NULL) {}
         Node(K k, V v) : key(k), value(v), left(NULL), right(NULL), parent(NULL) {}
@@ -64,11 +64,12 @@ public:
             cur = cur->right;
             while (cur->left)
                 cur = cur->left;
+            return cur;
         }
         else
         { // move up untill parent is smaller than cur (move up right chain)
             Node *parent = cur->parent;
-            while (parent->right == cur)
+            while (parent && parent->right == cur)
             {
                 cur = parent, parent = cur->parent;
             }
@@ -163,7 +164,7 @@ public:
         {
             if (newNode->key == cur->key)
             {
-                delete newNode;
+                destroy(newNode);
                 return; // no duplicate
             }
             if (newNode->key > cur->key)
@@ -194,8 +195,10 @@ public:
     // ERASE
     void destroy(Node *byebye)
     {
-        byebye = NULL;
-        delete byebye;
+        if (root == byebye)
+            root = NULL;
+        else
+            delete byebye;
         _size--;
     }
 
@@ -261,13 +264,15 @@ public:
         }
 
         // 2 CHILD
-        Node *nextMin = min(cur->right); // successor
-        K tempKey = nextMin->key;
-        V tempValue = nextMin->value;
-        if (nextMin->right)
+        // cerr << "@@ " << cur->key;
+        Node *succ = successor(cur); // successor
+        assert(succ->key > cur->key);
+        K tempKey = succ->key;
+        V tempValue = succ->value;
+        if (succ->right)
         {
-            nextMin->right->parent = nextMin->parent;
-            if (nextMin->parent->key > nextMin->key)
+            succ->right->parent = succ->parent;
+            if (succ->parent->key > succ->key)
             {
                 /* 
                        ㅇ
@@ -277,7 +282,7 @@ public:
                        ㅇ
 
             */
-                nextMin->parent->left = nextMin->right;
+                succ->parent->left = succ->right;
             }
             else
             {
@@ -289,10 +294,10 @@ public:
                          ㅇ
 
             */
-                nextMin->parent->right = nextMin->right;
+                succ->parent->right = succ->right;
             }
         }
-        destroy(nextMin);
+        destroy(succ);
         cur->key = tempKey, cur->value = tempValue;
         return;
     }
@@ -313,7 +318,6 @@ public:
     void inorder() { inorder(root); }
     void postorder() { postorder(root); }
 
-    // private:
     void preorder(Node *cur)
     {
         if (cur == NULL)
@@ -372,6 +376,9 @@ using namespace std;
 int main()
 {
     cin.tie(0)->sync_with_stdio(0);
+#ifndef ONLINE_JUDGE
+    freopen("input.txt", "r", stdin), freopen("output.txt", "w", stdout);
+#endif
     bst<int, int> tree;
 
     vector<int> v = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
@@ -381,10 +388,14 @@ int main()
     {
         for (auto x : perfect)
             tree.insert(x, 1);
-        tree.preorder();
-        for (auto x : v)
-            tree.erase(x);
 
+        tree.preorder();
+        cout << '\n';
+        for (auto x : v)
+        {
+            tree.erase(x);
+        }
+        assert(tree.size() == 0);
     } while (next_permutation(v.begin(), v.end()) && cnt++ < 100);
     cout << cnt;
 }
