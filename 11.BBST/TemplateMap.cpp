@@ -57,8 +57,6 @@ public:
     void deleteCase6(Node *);
     bool isLeaf(Node *cur) { return cur != root && cur == NULL; } // 모든 leaf 노드는 NULL
     void insert(K key, V value) { insert(new Node(key, value)); }
-    int min();
-    int max();
     int size() { return _size; }
     Node *root;
     int _size;
@@ -91,26 +89,6 @@ public:
     }
 };
 // ! helper function BEGIN
-template <class K, class V>
-int RBtree<K, V>::min()
-{
-    Node *cur = root;
-    while (cur->left)
-    {
-        cur = cur->left;
-    }
-    return cur->key;
-}
-template <class K, class V>
-int RBtree<K, V>::max()
-{
-    Node *cur = root;
-    while (cur->right)
-    {
-        cur = cur->right;
-    }
-    return cur->key;
-}
 template <class K, class V>
 typename RBtree<K, V>::Node *RBtree<K, V>::find(K key)
 {
@@ -644,55 +622,21 @@ int main()
 #ifndef ONLINE_JUDGE
     freopen("input.txt", "r", stdin), freopen("output.txt", "w", stdout);
 #endif
-    int t;
-    cin >> t;
-    while (t--)
+    RBtree<int, int> tree;
+    int n;
+    cin >> n;
+    for (int i = 0; i < n; i++)
     {
-        RBtree<int, int> mp;
-        int n;
-        cin >> n;
-        while (n--)
-        {
-            char a;
-            int b;
-            cin >> a >> b;
-            if (a == 'I')
-            {
-                if (!mp.count(b))
-                {
-                    mp.insert(b, 1);
-                }
-                else
-                    mp.find(b)->value++;
-            }
-            else
-            {
-                if (mp.size() == 0)
-                    continue;
-                if (b > 0)
-                {
-                    if (mp.find(mp.max())->value > 1)
-                        mp.find(mp.max())->value--;
-                    else
-                        mp.erase(mp.find(mp.max()));
-                }
-                else
-                {
-                    if (mp.find(mp.min())->value > 1)
-                        mp.find(mp.min())->value--;
-                    else
-                        mp.erase(mp.find(mp.min()));
-                }
-            }
-        }
-
-        if (mp.size())
-        {
-            cout << mp.max() << " " << mp.min() << '\n';
-        }
-        else
-        {
-            cout << "EMPTY" << '\n';
-        }
+        int a;
+        cin >> a;
+        tree.insert(a, 1);
+    }
+    int m;
+    cin >> m;
+    for (int i = 0; i < m; i++)
+    {
+        int a;
+        cin >> a;
+        cout << tree.count(a) << '\n';
     }
 }

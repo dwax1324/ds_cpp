@@ -1,23 +1,68 @@
 #include <stddef.h>
 #include <assert.h>
 #include <bits/stdc++.h>
-using namespace std;
 
-template <class K, class V>
+#define DEBUG
+using namespace std;
+/*
+
+* 1. 노드는 레드 혹은 블랙 중의 하나이다.
+* 2. 루트 노드는 블랙이다.
+* 3. 모든 리프 노드들(NIL)은 블랙이다.
+* 4. 레드 노드는 연달아 나타날 수 없다.
+* 5. 어떤 노드로부터 리프노드까지 항상 같은 개수의 블랙 노드가 있다.
+    ! 위 다섯 조건만 만족하면 트리의 높이가 최악의 경우 logN이 됨을 보장한다.
+
+left rotate, right rotate
+rotate을 했을때 이진탐색트리의 특성을 항상 유지하는가? O
+rotate을 했을때 레드블랙트리의 특성을 항상 유지하는가? X
+
+P = parent, U = uncle, G = grandparent , N = newNode
+
+*Insertion
+    case 1: 부모가 NULL인 경우
+    case 2: 부모색이 블랙일 경우
+    case 3: 부모와 삼촌이 레드일 경우
+    이 밑에서부터는 왼쪽을 기준으로 말한다. (반대쪽 경우도 생각해줘야함)
+    case 4: 부모는 레드, 삼촌은 블랙, 자신은 부모의 오른쪽 자식이며, 부모는 할아버지의 왼쪽 자식이다.
+    case 5: 부모는 레드,삼촌은 블랙,  자신은 부모의 왼쪽 자식이고, 부모는 할아버지의 왼쪽 자식이다.
+
+    *Solution
+        Case1: tree의 size가 0이다. 루트로 지정한 후 색을 블랙으로 바꾼다.
+        Case2: 모든 조건을 만족하므로 리턴한다.
+        Case3: 부모,삼촌,할아버지의 색을 반전시킨다.
+        Case4: 부모를 rotate를 시켜서 case5형태로 만들어준다.
+        Case5: 할아버지를 rotate를 시킨다. 이 경우, 
+               부모가 subtree의 루트가 된다. 부모의 자식(자신과 할아버지)의 색을 빨간색으로 바꾼후
+               부모의 색은 검은색으로 바꾼다.
+
+*Deletion
+    단순 값을 복사하는 것은 레드-블랙 특성(properties)을 위반하지 않는다.
+    삭제했을 때 특성을 위반하는지만 체크해주면 된다.
+    간단한 상황들 부터 처리
+        - 간단한 상황들
+            삭제할 노드가 레드일 경우 -> 그냥 삭제해주면 된다. 규칙위반 X
+            삭제할 노드가 블랙이고 그 자식이 레드일때 특성4,5를 위반할 수 있으나, 자식을 검은색으로 칠하면 된다.
+            
+
+
+
+*/
+
 class RBtree
 {
 
 public:
     enum
     {
-        RED = 1,
-        BLACK = 0
+        RED = true,
+        BLACK = false
     };
     class Node
     {
     public:
-        K key;
-        V value;
+        int key;
+        int value;
         Node *parent;
         Node *left;
         Node *right;
@@ -25,19 +70,19 @@ public:
         bool nullLeaf;
         ~Node();
         Node() {}
-        Node(K k) : key(k), parent(NULL), color(RED), left(NULL), right(NULL), nullLeaf(0) {}
-        Node(K k, V v) : key(k), value(v), parent(NULL), color(RED), left(NULL), nullLeaf(0), right(NULL) {}
+        Node(int k) : key(k), parent(NULL), color(RED), left(NULL), right(NULL), nullLeaf(0) {}
+        Node(int k, int v) : key(k), value(v), parent(NULL), color(RED), left(NULL), nullLeaf(0), right(NULL) {}
     };
     RBtree() : root(NULL), _size(0) {}
     void destroy(Node *);
-    bool count(K);
+    bool count(int);
     Node *getParent(Node *);
     Node *getGrandParent(Node *);
     Node *getSibling(Node *);
     Node *getUncle(Node *);
     Node *getCloseNephew(Node *);
     Node *getDistantNewphew(Node *);
-    Node *find(K key);
+    Node *find(int key);
     Node *getSuccesor(Node *);
     void rotateLeft(Node *);
     void rotateRight(Node *);
@@ -47,7 +92,7 @@ public:
     void insertCase3(Node *);
     void insertCase4(Node *);
     void insertCase5(Node *);
-    void erase(K);
+    void erase(int);
     void erase(Node *); // = delete
     void deleteCase1(Node *);
     void deleteCase2(Node *);
@@ -56,21 +101,11 @@ public:
     void deleteCase5(Node *);
     void deleteCase6(Node *);
     bool isLeaf(Node *cur) { return cur != root && cur == NULL; } // 모든 leaf 노드는 NULL
-    void insert(K key, V value) { insert(new Node(key, value)); }
-    int min();
-    int max();
+    void insert(int key, int value) { insert(new Node(key, value)); }
     int size() { return _size; }
     Node *root;
     int _size;
-    void print() { print(root); }
-    void print(Node *cur)
-    {
-        if (cur == NULL)
-            return;
-        print(cur->right);
-        cout << cur->key << '\n';
-        print(cur->left);
-    }
+
     void inorder() { inorder(root); }
     void inorder(Node *cur)
     {
@@ -91,28 +126,8 @@ public:
     }
 };
 // ! helper function BEGIN
-template <class K, class V>
-int RBtree<K, V>::min()
-{
-    Node *cur = root;
-    while (cur->left)
-    {
-        cur = cur->left;
-    }
-    return cur->key;
-}
-template <class K, class V>
-int RBtree<K, V>::max()
-{
-    Node *cur = root;
-    while (cur->right)
-    {
-        cur = cur->right;
-    }
-    return cur->key;
-}
-template <class K, class V>
-typename RBtree<K, V>::Node *RBtree<K, V>::find(K key)
+
+RBtree::Node *RBtree::find(int key)
 {
     Node *cur = root;
     while (cur != NULL)
@@ -126,8 +141,7 @@ typename RBtree<K, V>::Node *RBtree<K, V>::find(K key)
     }
     return NULL;
 }
-template <class K, class V>
-typename RBtree<K, V>::Node *RBtree<K, V>::getSuccesor(Node *cur)
+RBtree::Node *RBtree::getSuccesor(Node *cur)
 {
     if (cur->right)
     { // right subtree's leftmost node (move down left chain)
@@ -147,8 +161,7 @@ typename RBtree<K, V>::Node *RBtree<K, V>::getSuccesor(Node *cur)
     }
     return cur;
 }
-template <class K, class V>
-RBtree<K, V>::Node::~Node()
+RBtree::Node::~Node()
 {
     if (left && left->parent == this)
         left->parent = NULL;
@@ -160,8 +173,7 @@ RBtree<K, V>::Node::~Node()
         parent->right = NULL;
     left = right = parent = NULL;
 }
-template <class K, class V>
-bool RBtree<K, V>::count(K key)
+bool RBtree::count(int key)
 {
     Node *cur = root;
     while (cur != NULL)
@@ -175,31 +187,24 @@ bool RBtree<K, V>::count(K key)
     }
     return false;
 }
-
-template <class K, class V>
-void RBtree<K, V>::destroy(Node *byebye)
+void RBtree::destroy(Node *byebye)
 {
     if (byebye == root)
         root = NULL;
 
     delete byebye;
 }
-
-template <class K, class V>
-typename RBtree<K, V>::Node *RBtree<K, V>::getParent(Node *cur) // return NULL if arg is NULL,root
+RBtree::Node *RBtree::getParent(Node *cur) // return NULL if arg is NULL,root
 {
     if (cur == NULL)
         return NULL;
     return cur->parent;
 }
-template <class K, class V>
-typename RBtree<K, V>::Node *RBtree<K, V>::getGrandParent(Node *cur)
+RBtree::Node *RBtree::getGrandParent(Node *cur)
 {
     return getParent(getParent(cur));
 }
-
-template <class K, class V>
-typename RBtree<K, V>::Node *RBtree<K, V>::getSibling(Node *cur) // return NULL if cur have no silbing
+RBtree::Node *RBtree::getSibling(Node *cur) // return NULL if cur have no silbing
 {
     assert(cur != NULL);
     Node *parent = getParent(cur);
@@ -210,15 +215,22 @@ typename RBtree<K, V>::Node *RBtree<K, V>::getSibling(Node *cur) // return NULL 
     else
         return parent->left;
 }
-template <class K, class V>
-typename RBtree<K, V>::Node *RBtree<K, V>::getUncle(Node *cur)
+RBtree::Node *RBtree::getUncle(Node *cur)
 {
     assert(cur != NULL);
     return getSibling(getParent(cur));
 }
 
-template <class K, class V>
-void RBtree<K, V>::rotateLeft(Node *cur)
+/*
+  ?left rotation     ===>
+
+    ㅇ <- cur                        ㅇ   <- child
+   /  \                             /  \
+  A    ㅇ <- child         cur -> ㅇ    C
+       / \                       /  \
+      B   C                     A    B
+*/
+void RBtree::rotateLeft(Node *cur)
 {
     Node *child = cur->right;
     Node *parent = cur->parent;
@@ -241,9 +253,17 @@ void RBtree<K, V>::rotateLeft(Node *cur)
             parent->right = child;
     }
 }
+/*
+  ?rotate right     ===>
 
-template <class K, class V>
-void RBtree<K, V>::rotateRight(Node *cur)
+      cur->  ㅇ                       ㅇ <- child
+            /  \                     /  \             
+child ->  ㅇ    C                   A    ㅇ <- cur  
+         /  \                            / \          
+        A    B                          B   C                 
+*/
+
+void RBtree::rotateRight(Node *cur)
 {
     Node *child = cur->left;    // child
     Node *parent = cur->parent; // Parent
@@ -269,10 +289,8 @@ void RBtree<K, V>::rotateRight(Node *cur)
 // ! helper function END
 
 // ! INSERTION BEGIN
-
 // * 이진탐색트리와 똑같이 삽입해준 후  케이스분류를 해준다.
-template <class K, class V>
-void RBtree<K, V>::insert(Node *newNode)
+void RBtree::insert(Node *newNode)
 {
     Node *cur = root;
     while (cur != NULL)
@@ -322,12 +340,10 @@ void RBtree<K, V>::insert(Node *newNode)
 };
 
 /*
-
     ! Insert Case1: 루트인 경우
     검은색으로 색을 바꾸고 리턴한다.
 */
-template <class K, class V>
-void RBtree<K, V>::insertCase1(Node *newNode)
+void RBtree::insertCase1(Node *newNode)
 {
     // cerr << "case1\n";
     if (newNode->parent == NULL)
@@ -340,12 +356,10 @@ void RBtree<K, V>::insertCase1(Node *newNode)
 }
 
 /* 
-
     ! Insert Case2: 부모가 검은색일 경우
     규칙에 위배되는게 없으므로 리턴한다.
 */
-template <class K, class V>
-void RBtree<K, V>::insertCase2(Node *newNode)
+void RBtree::insertCase2(Node *newNode)
 {
     // cerr << "case2\n";
     if (newNode->parent->color == BLACK)
@@ -357,8 +371,22 @@ void RBtree<K, V>::insertCase2(Node *newNode)
     insertCase3(newNode);
 }
 
-template <class K, class V>
-void RBtree<K, V>::insertCase3(Node *newNode)
+/*
+    ! Insert Case3: 부모와 삼촌이 모두 빨간색일 경우
+
+    삽입되는 노드는 항상 빨간색이므로,
+    
+    한 노드에서부터 뻗어나가는 모든 경로에 대한 검은색 노드의 수를
+    유지하기 위해서, 부모와 삼촌을 검은색으로 바꾸고 할아버지 노드를 붉은색으로 바꾼다. 
+    하지만 이렇게 바꾸면
+        2)root node는 검은색이다
+        4)붉은색 노드의 두 자식 노드는 검은색이다.
+    위 조건을 만족하지 않을 수 있다.
+    따라서 할아버지 노드를 다시 InsertCase1로 호출한다.
+    할아버지 불쌍ㅠ_ㅠ
+*/
+
+void RBtree::insertCase3(Node *newNode)
 {
     // cerr << "case3\n";
     Node *parent = getParent(newNode);
@@ -377,8 +405,18 @@ void RBtree<K, V>::insertCase3(Node *newNode)
     insertCase4(newNode);
 }
 
-template <class K, class V>
-void RBtree<K, V>::insertCase4(Node *newNode)
+/*
+    부모 노드 P가 할아버지 노드 G의 왼쪽 자식이라고 가정한다.
+    반대의 경우도 생각해야한다.
+    ! Insert Case4: 부모 노드 P가 붉은색인데, 삼촌 노드 U는 검은색이고, 
+    ! 새로운 노드 N은 P의 오른쪽 자식 노드이며, P는 할아버지 노드 G의 왼쪽 자식 노드이다.
+
+    4. 붉은색 노드의 모든 자식은 검은색 노드이다을 만족하지 않기 때문에
+    이경우, left rotation을 진행한 후, 부모 노드였던 P를 다섯번째 케이스로 넘겨준다.
+    
+
+*/
+void RBtree::insertCase4(Node *newNode)
 {
     // cerr << "case4\n";
     Node *parent = getParent(newNode);
@@ -400,8 +438,23 @@ void RBtree<K, V>::insertCase4(Node *newNode)
     insertCase5(newNode);
 }
 
-template <class K, class V>
-void RBtree<K, V>::insertCase5(Node *newNode)
+/*
+    ! Insert Case5: 
+    ! 부모 노드 P는 붉은색이지만 삼촌 노드 U는 검은색이고, 
+    ! 새로운 노드 N이 P의 왼쪽 자식 노드이고,
+    ! P가 할아버지 노드 G의 왼쪽 자식 노드인 상황에서는 G에 대해 오른쪽 회전
+
+    회전의 결과 이전의 부모 노드였던 P는 새로운 노드 N과 할아버지 노드 G를 자식 노드로 갖는다. 
+    G가 이전에 검은색이었고, P는 붉은색일 수밖에 없기 때문에, 
+    P와 G의 색을 반대로 바꾸면 
+    레드-블랙 트리의 네 번째 속성(붉은색 노드의 두 자식 노드는 검은색 노드이다)을 만족한다. 
+    레드-블랙 트리의 다섯 번째 속성(한 노드에서부터 뻗어나가는 모든 경로에 대해 검은색 노드의 수는 같다)은 
+    계속 유지되는데, 이는 이전에 P를 포함하는 경로는 모두 G를 지나게 되고, 
+    바뀐 후 G를 포함하는 경로는 모두 P를 지나기 때문이다. 바뀌기 전에는 G가, 
+    바뀐 후에는 P가 P, G, N중 유일한 검은색 노드이다.
+
+*/
+void RBtree::insertCase5(Node *newNode)
 {
     // cerr << "case5\n";
     Node *parent = getParent(newNode);
@@ -414,13 +467,19 @@ void RBtree<K, V>::insertCase5(Node *newNode)
         rotateLeft(grandParent);
 }
 
+/*
+
+    RBtree::Node *RBtree::getCloseNephew(Node *)
+    {
+    }
+    RBtree::Node *RBtree::getDistantNewphew(Node *) {}
+*/
 //!INSERTION END
 
 //!DELETION BEGIN
-template <class K, class V>
-void RBtree<K, V>::erase(K key) { erase(find(key)); }
-template <class K, class V>
-void RBtree<K, V>::erase(Node *cur)
+
+void RBtree::erase(int key) { erase(find(key)); }
+void RBtree::erase(Node *cur)
 {
 
     if (cur == NULL || !count(cur->key)) // no such key
@@ -506,8 +565,10 @@ void RBtree<K, V>::erase(Node *cur)
     destroy(leaf);
 }
 
-template <class K, class V>
-void RBtree<K, V>::deleteCase1(Node *cur)
+/*
+    *Delete Case1: 루트인경우 종료한다.
+*/
+void RBtree::deleteCase1(Node *cur)
 {
     if (cur->parent == NULL)
     {
@@ -516,8 +577,14 @@ void RBtree<K, V>::deleteCase1(Node *cur)
     deleteCase2(cur);
 }
 
-template <class K, class V>
-void RBtree<K, V>::deleteCase2(Node *cur)
+/*
+    *Delete Case2: 
+    ! case 2를 통과하면 N과 S는 반드시 검은색 노드가 된다. new-> cur, S ->sibling
+    S: sibling , P: parent, 
+    * S 가 빨강일 경우. P의 자식인 S가 빨강색이므로 P가 검은색임이 명확하다.
+    * 이 경우 P와 S의 색을 바꾸고, P에서 왼쪽으로 회전 하면, S가 N의 할아버지 노드가 된다.
+*/
+void RBtree::deleteCase2(Node *cur)
 {
     Node *sibling = getSibling(cur);
     if (sibling && sibling->color == RED)
@@ -535,8 +602,14 @@ void RBtree<K, V>::deleteCase2(Node *cur)
     deleteCase3(cur);
 }
 
-template <class K, class V>
-void RBtree<K, V>::deleteCase3(Node *cur)
+/*
+    * Delete Case 3:
+    * P, S, 그리고 S의 자식들이 검은색인 경우 
+    * S를 빨강으로 칠하면 된다
+    부모는 case 1부터 시작하는 rebalancing 과정을 수행해야 한다.
+
+*/
+void RBtree::deleteCase3(Node *cur)
 {
     Node *sibling = getSibling(cur);
 
@@ -557,8 +630,13 @@ void RBtree<K, V>::deleteCase3(Node *cur)
     deleteCase4(cur);
 }
 
-template <class K, class V>
-void RBtree<K, V>::deleteCase4(Node *cur)
+/*
+    Case4: S와 S의 자식들은 검은색이지만, P는 빨강인 경우.
+     S와 P의 색을 바꾸면 된다
+
+*/
+
+void RBtree::deleteCase4(Node *cur)
 {
 
     Node *sibling = getSibling(cur);
@@ -581,8 +659,14 @@ void RBtree<K, V>::deleteCase4(Node *cur)
     deleteCase5(cur);
 }
 
-template <class K, class V>
-void RBtree<K, V>::deleteCase5(Node *cur)
+/*
+    Case5: S가 검정, S의 왼쪽 자식이 빨강, S의 오른쪽 자식이 검정이며, N이 부모의 왼쪽 자식인 경우. 
+     S가 검정, S의 오른쪽 자식이 빨강, S의 왼쪽 자식이 검정이며, N이 부모의 오른쪽 자식인 경우. 
+
+     S를 오른쪽으로 회전시켜서 S의 왼쪽 자식이 S의 부모노드이자 N의 새로운 형제 노드가 되도록 만든다.
+*/
+
+void RBtree::deleteCase5(Node *cur)
 {
     Node *sibling = getSibling(cur);
     if (sibling && sibling->color == BLACK)
@@ -612,8 +696,14 @@ void RBtree<K, V>::deleteCase5(Node *cur)
     deleteCase6(cur);
 }
 
-template <class K, class V>
-void RBtree<K, V>::deleteCase6(Node *cur)
+/*
+    Deletion Case 6:S가 검은색, S의 오른쪽 자식이 빨강이며, N 이 P의 왼쪽 자식인 경우
+
+    P를 왼쪽으로 회전해서, S가 P와 S의 오른쪽 자식노드의 부모 노드가 되게 한 후,
+    P와 S의 색을 바꾸고, S의 오른쪽 자식노드를 검은색으로 만든다
+*/
+
+void RBtree::deleteCase6(Node *cur)
 {
     Node *sibling = getSibling(cur);
 
@@ -633,7 +723,6 @@ void RBtree<K, V>::deleteCase6(Node *cur)
 }
 
 //!DELETION END
-
 #include <bits/stdc++.h>
 
 using namespace std;
@@ -641,58 +730,18 @@ using namespace std;
 int main()
 {
     cin.tie(0)->sync_with_stdio(0);
-#ifndef ONLINE_JUDGE
-    freopen("input.txt", "r", stdin), freopen("output.txt", "w", stdout);
-#endif
-    int t;
-    cin >> t;
-    while (t--)
-    {
-        RBtree<int, int> mp;
-        int n;
-        cin >> n;
-        while (n--)
-        {
-            char a;
-            int b;
-            cin >> a >> b;
-            if (a == 'I')
-            {
-                if (!mp.count(b))
-                {
-                    mp.insert(b, 1);
-                }
-                else
-                    mp.find(b)->value++;
-            }
-            else
-            {
-                if (mp.size() == 0)
-                    continue;
-                if (b > 0)
-                {
-                    if (mp.find(mp.max())->value > 1)
-                        mp.find(mp.max())->value--;
-                    else
-                        mp.erase(mp.find(mp.max()));
-                }
-                else
-                {
-                    if (mp.find(mp.min())->value > 1)
-                        mp.find(mp.min())->value--;
-                    else
-                        mp.erase(mp.find(mp.min()));
-                }
-            }
-        }
+#ifdef DEBUG
+    RBtree tree;
 
-        if (mp.size())
-        {
-            cout << mp.max() << " " << mp.min() << '\n';
-        }
-        else
-        {
-            cout << "EMPTY" << '\n';
-        }
-    }
+    vector<int> v = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+    do
+    {
+        for (auto x : v)
+            tree.insert(x, 1);
+        for (auto x : v)
+            tree.erase(x);
+    } while (next_permutation(v.begin(), v.end()));
+
+#endif
 }
